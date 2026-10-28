@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Góc của Cait</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖍️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Lexend:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f3f9ff;
+    --ink: #2b2d42;
+    --muted: #5d6178;
+    --card: #ffffff;
+    --red: #ff8a8a;
+    --yellow: #ffd95e;
+    --green: #7fd68b;
+    --blue: #6aaaff;
+    --purple: #c4a1ff;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background-color: var(--paper);
+    background-image: radial-gradient(#d3e6f8 1.5px, transparent 1.5px);
+    background-size: 22px 22px;
+    color: var(--ink);
+    font-family: "Lexend", system-ui, sans-serif;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 48px 20px 64px; }
+
+  header { text-align: center; margin-bottom: 28px; }
+  h1 {
+    font-family: "Baloo 2", "Lexend", sans-serif;
+    font-weight: 800;
+    font-size: clamp(2.4rem, 8vw, 4.2rem);
+    line-height: 1.1;
+    margin: 0 0 8px;
+    letter-spacing: .5px;
+  }
+  h1 span { display: inline-block; }
+  h1 .wiggle { animation: wiggle 1.2s ease-in-out 1; }
+  @keyframes wiggle {
+    0%,100% { transform: rotate(0); }
+    25% { transform: rotate(-8deg) translateY(-6px); }
+    60% { transform: rotate(6deg) translateY(-3px); }
+  }
+  .sub { margin: 0; color: var(--muted); font-size: 1.05rem; }
+
+  .search {
+    position: relative;
+    max-width: 480px;
+    margin: 0 auto 20px;
+  }
+  .search .glass {
+    position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+    font-size: 1.1rem; pointer-events: none;
+  }
+  .search input {
+    width: 100%;
+    font: 400 1rem "Lexend", sans-serif;
+    color: var(--ink);
+    background: var(--card);
+    border: 3px solid var(--ink);
+    border-radius: 999px;
+    padding: 12px 48px 12px 46px;
+    box-shadow: 4px 4px 0 var(--blue);
+    transition: box-shadow .12s, transform .12s;
+  }
+  .search input::placeholder { color: var(--muted); opacity: .8; }
+  .search input:focus { outline: none; box-shadow: 6px 6px 0 var(--purple); transform: translateY(-1px); }
+  .search input::-webkit-search-cancel-button { display: none; }
+  .clear {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    width: 30px; height: 30px; display: none; place-items: center;
+    font: 600 .95rem "Lexend", sans-serif;
+    color: var(--ink); background: var(--yellow);
+    border: 2.5px solid var(--ink); border-radius: 50%;
+    cursor: pointer; padding: 0; line-height: 1;
+  }
+  .clear.show { display: grid; }
+  .clear:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+  .filters { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 0 0 32px; }
+  .chip {
+    font: 500 .95rem "Lexend", sans-serif;
+    color: var(--ink);
+    background: var(--card);
+    border: 2.5px solid var(--ink);
+    border-radius: 999px;
+    padding: 6px 16px;
+    cursor: pointer;
+    transition: transform .12s, background .12s;
+  }
+  .chip:hover { transform: translateY(-2px); }
+  .chip[aria-pressed="true"] { background: var(--yellow); box-shadow: 3px 3px 0 var(--ink); }
+  .chip:focus-visible, .card:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 26px; }
+  .card {
+    display: flex; flex-direction: column; gap: 10px;
+    background: var(--card);
+    color: inherit;
+    text-decoration: none;
+    border: 3px solid var(--ink);
+    border-radius: 22px;
+    padding: 20px;
+    box-shadow: 6px 6px 0 var(--accent, var(--blue));
+    transition: transform .15s, box-shadow .15s;
+  }
+  .card:nth-child(odd)  { transform: rotate(-1deg); }
+  .card:nth-child(even) { transform: rotate(1deg); }
+  .card:hover { transform: rotate(0) translateY(-4px); box-shadow: 10px 10px 0 var(--accent, var(--blue)); }
+  .icon {
+    width: 58px; height: 58px; display: grid; place-items: center;
+    font-size: 1.9rem;
+    background: var(--accent, var(--blue));
+    border: 3px solid var(--ink);
+    border-radius: 18px;
+  }
+  .card h2 { font-family: "Baloo 2", "Lexend", sans-serif; font-size: 1.35rem; line-height: 1.2; margin: 4px 0 0; }
+  .card p { margin: 0; color: var(--muted); font-size: .93rem; flex: 1; }
+  .meta { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+  .tag { font-size: .8rem; background: var(--paper); border: 2px solid var(--ink); border-radius: 999px; padding: 1px 10px; }
+  .open { font-family: "Baloo 2", sans-serif; font-weight: 800; }
+  mark { background: var(--yellow); color: inherit; border-radius: 4px; padding: 0 2px; }
+
+  .add { border-style: dashed; box-shadow: none; background: transparent; justify-content: center; align-items: center; text-align: center; min-height: 180px; color: var(--muted); }
+  .add:hover { box-shadow: none; }
+  .add code { background: var(--card); border: 2px solid var(--ink); border-radius: 8px; padding: 0 6px; font-size: .85rem; }
+
+  .empty { text-align: center; color: var(--muted); display: none; margin-top: 20px; }
+  .count { text-align: center; color: var(--muted); font-size: .9rem; margin: -16px 0 20px; min-height: 1.4em; }
+  footer { text-align: center; margin-top: 56px; color: var(--muted); font-size: .9rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="title" aria-label="Góc của Cait"></h1>
+    <p class="sub">Tất cả game và app nhỏ Cait tự làm</p>
+  </header>
+
+  <div class="search" role="search">
+    <span class="glass" aria-hidden="true">🔍</span>
+    <input id="q" type="search" placeholder="Tìm app, game, worksheet…" aria-label="Tìm app" autocomplete="off">
+    <button class="clear" id="clear" type="button" aria-label="Xóa tìm kiếm">✕</button>
+  </div>
+
+  <div class="filters" id="filters" role="group" aria-label="Lọc theo loại"></div>
+  <p class="count" id="count" aria-live="polite"></p>
+  <main class="grid" id="grid"></main>
+  <p class="empty" id="empty">Chưa có app nào ở mục này 🌱</p>
+</div>
+
+<script>
+/* ============================================================
+   THÊM APP MỚI: copy 1 dòng { ... } bên dưới, sửa lại, dán thêm vào.
+   - url: dán link đầy đủ (https://...), link sẽ mở ở tab mới
+   - type: đúng 1 trong 2 loại bên dưới:
+       "Game học tập"  |  "Game giải trí"  |  "App làm việc"
+   - color: red | yellow | green | blue | purple
+   - keywords (không bắt buộc): từ khóa phụ để tìm kiếm
+   ============================================================ */
+const TYPES = ["Game học tập", "Game giải trí", "App làm việc"];
+
+const APPS = [
+  /* ---------- App làm việc ---------- */
+  {
+    title: "VocabSheet",
+    desc: "Nhập danh sách từ vựng tiếng Anh rồi xuất worksheet PDF cho học sinh điền nghĩa hoặc viết từ.",
+    url: "https://checkvocab.netlify.app/",
+    emoji: "📋", type: "App làm việc", color: "blue",
+    keywords: "worksheet từ vựng pdf kiểm tra bài"
+  },
+  {
+    title: "Xưởng Worksheet",
+    desc: "Tạo phiếu tô màu theo số và tập viết chữ trong 1 phút, in 2 trang A4.",
+    url: "https://colour-by-numbers.vercel.app/",
+    emoji: "🧸", type: "App làm việc", color: "yellow",
+    keywords: "tô màu theo số tập viết in a4 worksheet"
+  },
+  {
+    title: "Tracing Worksheet Generator",
+    desc: "Tạo phiếu tập viết theo nét chấm mờ cho bé tập tô chữ.",
+    url: "https://tracing-worksheet.bolt.host/",
+    emoji: "✏️", type: "App làm việc", color: "green",
+    keywords: "tracing tập viết worksheet in phiếu"
+  },
+  {
+    title: "Worksheet Generator",
+    desc: "Công cụ tạo worksheet cho trẻ em bằng AI.",
+    url: "https://education-sheet.lovable.app/",
+    emoji: "📝", type: "App làm việc", color: "purple",
+    keywords: "ai worksheet phiếu bài tập"
+  },
+  {
+    title: "AI Writing Assistant Pro",
+    desc: "Trợ lý AI hỗ trợ viết và chỉnh sửa văn bản.",
+    url: "https://aiwritepro-bt86ffhi.manus.space/",
+    emoji: "🤖", type: "App làm việc", color: "red",
+    keywords: "ai viết văn bản trợ lý writing"
+  },
+
+  /* ---------- Game học tập & Game giải trí ---------- */
+  {
+    title: "Memory Match",
+    desc: "Lật thẻ tìm cặp giống nhau với hình ảnh hoặc từ vựng tiếng Anh, có bảng xếp hạng.",
+    url: "https://turn-cards.netlify.app/",
+    emoji: "🃏", type: "Game học tập", color: "purple",
+    keywords: "lật thẻ trí nhớ từ vựng tiếng anh"
+  },
+  {
+    title: "Spelling Mole Adventure",
+    desc: "Đập chuột chũi đang cầm chữ cái còn thiếu để ghép đúng từ tiếng Anh.",
+    url: "https://dapthu.netlify.app/",
+    emoji: "🐹", type: "Game học tập", color: "red",
+    keywords: "đập chuột chũi spelling đánh vần chính tả tiếng anh"
+  },
+  {
+    title: "Trại Gà Tốc Chiến",
+    desc: "Game thu trứng ở trại gà, luyện tiếng Anh vừa chơi vừa học.",
+    url: "https://collect-eggs.netlify.app/",
+    emoji: "🥚", type: "Game học tập", color: "yellow",
+    keywords: "english egg farm thu trứng gà tiếng anh"
+  },
+  {
+    title: "Đào Trứng Vàng",
+    desc: "Thử thách 30 giây đào trứng vàng, leo bảng xếp hạng.",
+    url: "https://gaptrung.vercel.app/",
+    emoji: "🥇", type: "Game giải trí", color: "yellow",
+    keywords: "gắp trứng vàng 30 giây bảng xếp hạng kawaii"
+  },
+  {
+    title: "Chém Hoa Quả",
+    desc: "Chém hoa quả liên hoàn, combo càng cao điểm càng nhiều. Chế độ cổ điển hoặc 30 giây.",
+    url: "https://fruit-ninja-omega.vercel.app/",
+    emoji: "🍎", type: "Game giải trí", color: "red",
+    keywords: "fruit ninja chém trái cây combo"
+  },
+  {
+    title: "Cá Béo",
+    desc: "Điều khiển cá lớn dần giữa đại dương đa sắc, chơi sinh tồn hoặc thử thách 30 giây.",
+    url: "https://cabeo.vercel.app/",
+    emoji: "🐟", type: "Game giải trí", color: "blue",
+    keywords: "đại dương cá ăn cá sinh tồn"
+  },
+  {
+    title: "Câu Cá Vạn Cân",
+    desc: "Game câu cá giữa đại dương, câu được cá càng nặng điểm càng cao.",
+    url: "https://cauca.netlify.app/",
+    emoji: "🎣", type: "Game giải trí", color: "green",
+    keywords: "ocean master câu cá"
+  },
+  {
+    title: "Đua Bi Thần Tốc",
+    desc: "App gọi tên học sinh bằng cách đua bi, bi nào về đích trước thì được gọi.",
+    url: "https://duabi.netlify.app/",
+    emoji: "🔮", type: "App làm việc", color: "purple",
+    keywords: "gọi tên bốc thăm ngẫu nhiên điểm danh đua bi bi lăn"
+  }
+];
+
+const TITLE = "Góc của Cait";
+const COLORS = ["--red", "--yellow", "--green", "--blue", "--purple"];
+
+/* Tiêu đề nhiều màu như bút sáp */
+const h1 = document.getElementById("title");
+[...TITLE].forEach((ch, i) => {
+  const s = document.createElement("span");
+  s.textContent = ch === " " ? "\u00A0" : ch;
+  s.style.color = `var(${COLORS[i % COLORS.length]})`;
+  s.style.webkitTextStroke = "0";
+  s.style.textShadow = "2px 2px 0 var(--ink)";
+  s.style.animationDelay = `${i * 60}ms`;
+  s.className = "wiggle";
+  s.setAttribute("aria-hidden", "true");
+  h1.appendChild(s);
+});
+
+const grid = document.getElementById("grid");
+const filters = document.getElementById("filters");
+const empty = document.getElementById("empty");
+const count = document.getElementById("count");
+const input = document.getElementById("q");
+const clearBtn = document.getElementById("clear");
+let current = "Tất cả";
+let query = "";
+
+function esc(t) { const d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
+
+/* Bỏ dấu tiếng Việt + chữ thường, để gõ "to mau" vẫn tìm ra "tô màu" */
+function fold(s) {
+  return String(s || "")
+    .toLowerCase()
+    .replace(/đ/g, "d")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+/* Tô sáng chữ khớp (so khớp không dấu, nhưng hiển thị chữ gốc) */
+function highlight(text, terms) {
+  if (!terms.length) return esc(text);
+  const src = String(text);
+  /* fold từng ký tự để giữ nguyên độ dài, vị trí khớp đúng với chuỗi gốc */
+  const chars = [...src];
+  const folded = chars.map(c => fold(c) || c).join("");
+  if (folded.length !== src.length) return esc(src);
+  const mask = new Array(src.length).fill(false);
+  terms.forEach(t => {
+    let i = folded.indexOf(t);
+    while (i !== -1) {
+      for (let k = i; k < i + t.length; k++) mask[k] = true;
+      i = folded.indexOf(t, i + t.length);
+    }
+  });
+  let out = "", open = false;
+  for (let i = 0; i < src.length; i++) {
+    if (mask[i] && !open) { out += "<mark>"; open = true; }
+    if (!mask[i] && open) { out += "</mark>"; open = false; }
+    out += esc(src[i]);
+  }
+  return open ? out + "</mark>" : out;
+}
+
+function render() {
+  const terms = fold(query).split(/\s+/).filter(Boolean);
+  const list = APPS.filter(a => {
+    if (current !== "Tất cả" && a.type !== current) return false;
+    const hay = fold([a.title, a.desc, a.type, a.keywords].join(" "));
+    return terms.every(t => hay.includes(t));
+  });
+
+  grid.innerHTML = list.map(a => `
+    <a class="card" href="${esc(a.url)}" target="_blank" rel="noopener noreferrer" style="--accent: var(--${esc(a.color || "blue")})">
+      <div class="icon" aria-hidden="true">${esc(a.emoji || "⭐")}</div>
+      <h2>${highlight(a.title, terms)}</h2>
+      <p>${highlight(a.desc || "", terms)}</p>
+      <div class="meta"><span class="tag">${esc(a.type || "App")}</span><span class="open">Mở nè!</span></div>
+    </a>`).join("")
+;
+
+  empty.textContent = terms.length
+    ? `Không tìm thấy "${query.trim()}" 🔎 Thử từ khác nhé!`
+    : "Chưa có app nào ở mục này 🌱";
+  empty.style.display = list.length ? "none" : "block";
+  count.textContent = terms.length && list.length ? `Tìm thấy ${list.length} app` : "";
+  clearBtn.classList.toggle("show", query.length > 0);
+}
+
+function renderFilters() {
+  const types = ["Tất cả", ...TYPES, ...new Set(APPS.map(a => a.type).filter(t => !TYPES.includes(t)))];
+  filters.innerHTML = types.map(t =>
+    `<button class="chip" aria-pressed="${t === current}" data-t="${esc(t)}">${esc(t)}</button>`).join("");
+}
+
+filters.addEventListener("click", e => {
+  const b = e.target.closest(".chip");
+  if (!b) return;
+  current = b.dataset.t;
+  renderFilters();
+  render();
+});
+
+input.addEventListener("input", () => { query = input.value; render(); });
+clearBtn.addEventListener("click", () => { input.value = ""; query = ""; render(); input.focus(); });
+input.addEventListener("keydown", e => {
+  if (e.key === "Escape" && query) { input.value = ""; query = ""; render(); }
+});
+/* Nhấn "/" để nhảy vào ô tìm kiếm */
+document.addEventListener("keydown", e => {
+  if (e.key === "/" && document.activeElement !== input && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault();
+    input.focus();
+  }
+});
+
+renderFilters();
+render();
+</script>
+</body>
+</html>
