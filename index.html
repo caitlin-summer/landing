@@ -85,7 +85,11 @@
   .clear.show { display: grid; }
   .clear:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
 
-  .filters { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 0 0 32px; }
+  .filters { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 0 0 14px; }
+  .filters.sub { margin: 0 0 18px; }
+  .filters.sub:empty { display: none; }
+  .chip.small { font-size: .85rem; padding: 3px 13px; border-width: 2px; }
+  .chip.small[aria-pressed="true"] { box-shadow: 2px 2px 0 var(--ink); }
   .chip {
     font: 500 .95rem "Lexend", sans-serif;
     color: var(--ink);
@@ -134,7 +138,28 @@
   .add code { background: var(--card); border: 2px solid var(--ink); border-radius: 8px; padding: 0 6px; font-size: .85rem; }
 
   .empty { text-align: center; color: var(--muted); display: none; margin-top: 20px; }
-  .count { text-align: center; color: var(--muted); font-size: .9rem; margin: -16px 0 20px; min-height: 1.4em; }
+  .count { text-align: center; color: var(--muted); font-size: .9rem; margin: 6px 0 22px; min-height: 1.4em; }
+
+  .section { margin: 0 0 48px; }
+  .group-title {
+    display: flex; align-items: center; gap: 12px;
+    font-family: "Baloo 2", "Lexend", sans-serif; font-weight: 800;
+    font-size: clamp(1.6rem, 5vw, 2.1rem); line-height: 1.2;
+    margin: 0 0 18px;
+  }
+  .group-title::after {
+    content: ""; flex: 1; height: 5px; border-radius: 5px;
+    background: var(--g, var(--blue)); border: 2px solid var(--ink);
+  }
+  .sub-section { margin: 0 0 30px; }
+  .sub-title {
+    display: inline-flex; align-items: center; gap: 8px;
+    font: 500 1rem "Lexend", sans-serif;
+    margin: 0 0 20px; padding: 3px 14px;
+    background: var(--g, var(--blue));
+    border: 2.5px solid var(--ink); border-radius: 999px;
+  }
+  .sub-title .n { font-size: .8rem; background: var(--card); border-radius: 999px; padding: 0 8px; }
   footer { text-align: center; margin-top: 56px; color: var(--muted); font-size: .9rem; }
 
   @media (prefers-reduced-motion: reduce) {
@@ -155,9 +180,10 @@
     <button class="clear" id="clear" type="button" aria-label="Xóa tìm kiếm">✕</button>
   </div>
 
-  <div class="filters" id="filters" role="group" aria-label="Lọc theo loại"></div>
+  <div class="filters" id="filters" role="group" aria-label="Lọc theo mục lớn"></div>
+  <div class="filters sub" id="subfilters" role="group" aria-label="Lọc theo mục nhỏ"></div>
   <p class="count" id="count" aria-live="polite"></p>
-  <main class="grid" id="grid"></main>
+  <main id="grid"></main>
   <p class="empty" id="empty">Chưa có app nào ở mục này 🌱</p>
 </div>
 
@@ -165,48 +191,52 @@
 /* ============================================================
    THÊM APP MỚI: copy 1 dòng { ... } bên dưới, sửa lại, dán thêm vào.
    - url: dán link đầy đủ (https://...), link sẽ mở ở tab mới
-   - type: đúng 1 trong 2 loại bên dưới:
-       "Game học tập"  |  "Game giải trí"  |  "App làm việc"
+   - type: mục nhỏ, phải ghi đúng 1 trong 4 tên bên dưới:
+       Mục lớn Game:       "Game học tập" | "Game giải trí"
+       Mục lớn App làm việc: "App tạo worksheet" | "App khác"
    - color: red | yellow | green | blue | purple
    - keywords (không bắt buộc): từ khóa phụ để tìm kiếm
    ============================================================ */
-const TYPES = ["Game học tập", "Game giải trí", "App làm việc"];
+const GROUPS = [
+  { name: "Game",         emoji: "🎮", color: "blue",  types: ["Game học tập", "Game giải trí"] },
+  { name: "App làm việc", emoji: "🧰", color: "green", types: ["App tạo worksheet", "App khác"] }
+];
 
 const APPS = [
-  /* ---------- App làm việc ---------- */
+  /* ---------- App tạo worksheet & App khác ---------- */
   {
     title: "VocabSheet",
     desc: "Nhập danh sách từ vựng tiếng Anh rồi xuất worksheet PDF cho học sinh điền nghĩa hoặc viết từ.",
     url: "https://checkvocab.netlify.app/",
-    emoji: "📋", type: "App làm việc", color: "blue",
+    emoji: "📋", type: "App tạo worksheet", color: "blue",
     keywords: "worksheet từ vựng pdf kiểm tra bài"
   },
   {
     title: "Xưởng Worksheet",
     desc: "Tạo phiếu tô màu theo số và tập viết chữ trong 1 phút, in 2 trang A4.",
     url: "https://colour-by-numbers.vercel.app/",
-    emoji: "🧸", type: "App làm việc", color: "yellow",
+    emoji: "🧸", type: "App tạo worksheet", color: "yellow",
     keywords: "tô màu theo số tập viết in a4 worksheet"
   },
   {
     title: "Tracing Worksheet Generator",
     desc: "Tạo phiếu tập viết theo nét chấm mờ cho bé tập tô chữ.",
     url: "https://tracing-worksheet.bolt.host/",
-    emoji: "✏️", type: "App làm việc", color: "green",
+    emoji: "✏️", type: "App tạo worksheet", color: "green",
     keywords: "tracing tập viết worksheet in phiếu"
   },
   {
     title: "Worksheet Generator",
     desc: "Công cụ tạo worksheet cho trẻ em bằng AI.",
     url: "https://education-sheet.lovable.app/",
-    emoji: "📝", type: "App làm việc", color: "purple",
+    emoji: "📝", type: "App tạo worksheet", color: "purple",
     keywords: "ai worksheet phiếu bài tập"
   },
   {
     title: "AI Writing Assistant Pro",
     desc: "Trợ lý AI hỗ trợ viết và chỉnh sửa văn bản.",
     url: "https://aiwritepro-bt86ffhi.manus.space/",
-    emoji: "🤖", type: "App làm việc", color: "red",
+    emoji: "🤖", type: "App khác", color: "red",
     keywords: "ai viết văn bản trợ lý writing"
   },
 
@@ -264,7 +294,7 @@ const APPS = [
     title: "Đua Bi Thần Tốc",
     desc: "App gọi tên học sinh bằng cách đua bi, bi nào về đích trước thì được gọi.",
     url: "https://duabi.netlify.app/",
-    emoji: "🔮", type: "App làm việc", color: "purple",
+    emoji: "🔮", type: "App khác", color: "purple",
     keywords: "gọi tên bốc thăm ngẫu nhiên điểm danh đua bi bi lăn"
   }
 ];
@@ -288,11 +318,13 @@ const h1 = document.getElementById("title");
 
 const grid = document.getElementById("grid");
 const filters = document.getElementById("filters");
+const subfilters = document.getElementById("subfilters");
 const empty = document.getElementById("empty");
 const count = document.getElementById("count");
 const input = document.getElementById("q");
 const clearBtn = document.getElementById("clear");
-let current = "Tất cả";
+let curGroup = "Tất cả";
+let curType = "Tất cả";
 let query = "";
 
 function esc(t) { const d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
@@ -331,41 +363,78 @@ function highlight(text, terms) {
   return open ? out + "</mark>" : out;
 }
 
-function render() {
-  const terms = fold(query).split(/\s+/).filter(Boolean);
-  const list = APPS.filter(a => {
-    if (current !== "Tất cả" && a.type !== current) return false;
-    const hay = fold([a.title, a.desc, a.type, a.keywords].join(" "));
-    return terms.every(t => hay.includes(t));
-  });
-
-  grid.innerHTML = list.map(a => `
+function cardHTML(a, terms) {
+  return `
     <a class="card" href="${esc(a.url)}" target="_blank" rel="noopener noreferrer" style="--accent: var(--${esc(a.color || "blue")})">
       <div class="icon" aria-hidden="true">${esc(a.emoji || "⭐")}</div>
       <h2>${highlight(a.title, terms)}</h2>
       <p>${highlight(a.desc || "", terms)}</p>
       <div class="meta"><span class="tag">${esc(a.type || "App")}</span><span class="open">Mở nè!</span></div>
-    </a>`).join("")
-;
+    </a>`;
+}
+
+function render() {
+  const terms = fold(query).split(/\s+/).filter(Boolean);
+  const match = a => {
+    const hay = fold([a.title, a.desc, a.type, a.keywords].join(" "));
+    return terms.every(t => hay.includes(t));
+  };
+  let total = 0;
+
+  grid.innerHTML = GROUPS
+    .filter(g => curGroup === "Tất cả" || g.name === curGroup)
+    .map(g => {
+      const blocks = g.types
+        .filter(t => curType === "Tất cả" || t === curType)
+        .map(t => {
+          const items = APPS.filter(a => a.type === t && match(a));
+          total += items.length;
+          if (!items.length) return "";
+          return `
+          <div class="sub-section">
+            <h3 class="sub-title">${esc(t)} <span class="n">${items.length}</span></h3>
+            <div class="grid">${items.map(a => cardHTML(a, terms)).join("")}</div>
+          </div>`;
+        }).join("");
+      return blocks
+        ? `<section class="section" style="--g: var(--${esc(g.color)})">
+             <h2 class="group-title"><span aria-hidden="true">${esc(g.emoji)}</span>${esc(g.name)}</h2>${blocks}
+           </section>`
+        : "";
+    }).join("");
 
   empty.textContent = terms.length
     ? `Không tìm thấy "${query.trim()}" 🔎 Thử từ khác nhé!`
     : "Chưa có app nào ở mục này 🌱";
-  empty.style.display = list.length ? "none" : "block";
-  count.textContent = terms.length && list.length ? `Tìm thấy ${list.length} app` : "";
+  empty.style.display = total ? "none" : "block";
+  count.textContent = terms.length && total ? `Tìm thấy ${total} app` : "";
   clearBtn.classList.toggle("show", query.length > 0);
 }
 
+function chips(names, active, attr, small) {
+  return names.map(n =>
+    `<button class="chip${small ? " small" : ""}" aria-pressed="${n === active}" ${attr}="${esc(n)}">${esc(n)}</button>`).join("");
+}
+
 function renderFilters() {
-  const types = ["Tất cả", ...TYPES, ...new Set(APPS.map(a => a.type).filter(t => !TYPES.includes(t)))];
-  filters.innerHTML = types.map(t =>
-    `<button class="chip" aria-pressed="${t === current}" data-t="${esc(t)}">${esc(t)}</button>`).join("");
+  filters.innerHTML = chips(["Tất cả", ...GROUPS.map(g => g.name)], curGroup, "data-g", false);
+  const g = GROUPS.find(x => x.name === curGroup);
+  subfilters.innerHTML = g ? chips(["Tất cả", ...g.types], curType, "data-t", true) : "";
 }
 
 filters.addEventListener("click", e => {
-  const b = e.target.closest(".chip");
+  const b = e.target.closest("[data-g]");
   if (!b) return;
-  current = b.dataset.t;
+  curGroup = b.dataset.g;
+  curType = "Tất cả";
+  renderFilters();
+  render();
+});
+
+subfilters.addEventListener("click", e => {
+  const b = e.target.closest("[data-t]");
+  if (!b) return;
+  curType = b.dataset.t;
   renderFilters();
   render();
 });
