@@ -2,335 +2,187 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Caitlin</title>
-<!-- CỔNG MẬT KHẨU: đổi mã bằng cách thay HASH (xem ghi chú cuối đoạn script) -->
-<script>
-(function () {
-  var HASH = "4627e00ddc49e55b22ba8420be6dd0b94607bec7c4ccdd9d20e37e252fefa776";
-  var KEY = "gate-ok-" + HASH.slice(0, 10);
-  var unlocked = false;
-
-  try { if (localStorage.getItem(KEY) === "1") return; } catch (e) {}
-
-  var st = document.createElement("style");
-  st.textContent =
-    "html.locked body>*:not(#gate){display:none!important}" +
-    "#gate{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;padding:20px;" +
-    "background:#f7f9fd;font-family:Lexend,system-ui,sans-serif;color:#2b2d42}" +
-    "#gate form{width:100%;max-width:340px;text-align:center;background:#fff;border:1.5px solid #e3e8f2;" +
-    "border-radius:18px;padding:28px 22px;box-shadow:4px 4px 0 #ffd95e}" +
-    "#gate h1{margin:0 0 6px;font-size:1.3rem}" +
-    "#gate p{margin:0 0 16px;font-size:.85rem;color:#6a6e85}" +
-    "#gate input{width:100%;font:inherit;padding:10px 12px;border:1.5px solid #e3e8f2;border-radius:12px;text-align:center}" +
-    "#gate input:focus-visible,#gate button:focus-visible{outline:3px solid #2b6cdf;outline-offset:2px}" +
-    "#gate button{margin-top:12px;width:100%;font:inherit;font-weight:500;padding:10px;border:1.5px solid #2b2d42;" +
-    "border-radius:12px;background:#ffd95e;cursor:pointer}" +
-    "#gate .err{min-height:1.2em;margin:10px 0 0;font-size:.85rem;color:#b3261e}" +
-    "#gate input,#gate button{min-height:44px}";
-  document.head.appendChild(st);
-  document.documentElement.classList.add("locked");
-
-  /* SHA-256 thuần JS: dùng khi trình duyệt/preview không có crypto.subtle */
-  function sha256js(ascii) {
-    function rr(v, a) { return (v >>> a) | (v << (32 - a)); }
-    var mp = Math.pow, mw = mp(2, 32), i, j, result = "";
-    var words = [], bitLen = ascii.length * 8;
-    var hash = [], k = [], pc = 0, comp = {};
-    for (var c = 2; pc < 64; c++) {
-      if (!comp[c]) {
-        for (i = 0; i < 313; i += c) comp[i] = c;
-        hash[pc] = (mp(c, 0.5) * mw) | 0;
-        k[pc++] = (mp(c, 1 / 3) * mw) | 0;
-      }
-    }
-    ascii += "\x80";
-    while (ascii.length % 64 - 56) ascii += "\x00";
-    for (i = 0; i < ascii.length; i++) {
-      j = ascii.charCodeAt(i);
-      words[i >> 2] |= j << ((3 - i) % 4) * 8;
-    }
-    words[words.length] = (bitLen / mw) | 0;
-    words[words.length] = bitLen;
-    for (j = 0; j < words.length;) {
-      var w = words.slice(j, j += 16), old = hash;
-      hash = hash.slice(0, 8);
-      for (i = 0; i < 64; i++) {
-        var w15 = w[i - 15], w2 = w[i - 2], a = hash[0], e = hash[4];
-        var t1 = hash[7] + (rr(e, 6) ^ rr(e, 11) ^ rr(e, 25)) + ((e & hash[5]) ^ (~e & hash[6])) + k[i] +
-          (w[i] = i < 16 ? w[i] : (w[i - 16] + (rr(w15, 7) ^ rr(w15, 18) ^ (w15 >>> 3)) + w[i - 7] +
-            (rr(w2, 17) ^ rr(w2, 19) ^ (w2 >>> 10))) | 0);
-        var t2 = (rr(a, 2) ^ rr(a, 13) ^ rr(a, 22)) + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
-        hash = [(t1 + t2) | 0].concat(hash);
-        hash[4] = (hash[4] + t1) | 0;
-      }
-      for (i = 0; i < 8; i++) hash[i] = (hash[i] + old[i]) | 0;
-    }
-    for (i = 0; i < 8; i++) {
-      for (j = 3; j + 1; j--) {
-        var b = (hash[i] >> (j * 8)) & 255;
-        result += (b < 16 ? 0 : "") + b.toString(16);
-      }
-    }
-    return result;
-  }
-
-  function sha256(s) {
-    if (window.crypto && crypto.subtle && window.TextEncoder) {
-      return crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)).then(function (b) {
-        return Array.prototype.map.call(new Uint8Array(b), function (x) {
-          return x.toString(16).padStart(2, "0");
-        }).join("");
-      }).catch(function () { return sha256js(unescape(encodeURIComponent(s))); });
-    }
-    return Promise.resolve(sha256js(unescape(encodeURIComponent(s))));
-  }
-
-  function build() {
-    var g = document.createElement("div");
-    g.id = "gate";
-    g.innerHTML =
-      '<form autocomplete="off">' +
-      '<h1>Nhập mã để vào</h1>' +
-      '<p>Trang này cần mã truy cập.</p>' +
-      '<input type="password" id="gateInput" inputmode="numeric" placeholder="Mã truy cập" aria-label="Mã truy cập">' +
-      '<button type="submit">Vào</button>' +
-      '<div class="err" id="gateErr" aria-live="polite"></div>' +
-      '</form>';
-    document.body.appendChild(g);
-
-    var form = g.querySelector("form");
-    var input = g.querySelector("#gateInput");
-    var err = g.querySelector("#gateErr");
-    input.focus();
-
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-      sha256(input.value.trim()).then(function (h) {
-        if (h === HASH) {
-          var saved = false;
-          try { localStorage.setItem(KEY, "1"); saved = localStorage.getItem(KEY) === "1"; } catch (e2) {}
-          if (saved) { location.reload(); return; }
-          document.documentElement.classList.remove("locked");
-          g.remove();
-          window.dispatchEvent(new Event("resize"));
-        } else {
-          err.textContent = "Sai mã rồi, thử lại nhé 🙈";
-          input.value = "";
-          input.focus();
-        }
-      });
-    });
-  }
-
-  if (document.body) build();
-  else document.addEventListener("DOMContentLoaded", build);
-
-  /* Đổi mã: mở Console (F12) dán dòng dưới, thay 565656 bằng mã mới, copy chuỗi ra dán vào HASH:
-     crypto.subtle.digest("SHA-256", new TextEncoder().encode("565656")).then(b=>console.log([...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")))  */
-})();
-</script>
+<meta name="theme-color" content="#faf7f0">
+<script>try{var th=localStorage.getItem('caitlin_theme');if(th)document.documentElement.dataset.theme=th}catch(e){}</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖍️</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Lexend:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  /* Token theo DESIGN.md */
   :root {
-    --bg: #fff9ec; --panel: #ffffff; --ink: #2b2d42; --muted: #5a5e75;
-    --focus: #2b6cdf; --line: #eadfc6; --hover: #fff1d6;
-    --red: #ff8a8a; --yellow: #ffd95e; --green: #7fd68b; --blue: #6aaaff; --purple: #c4a1ff;
-    --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
-    --r-sm: 10px; --r-md: 18px; --r-pill: 999px;
-    --bd: 2px solid var(--ink);
-    --shadow-card: 4px 4px 0 var(--accent, var(--blue));
-    --shadow-lift: 7px 7px 0 var(--accent, var(--blue));
-    --shadow-btn: 2px 2px 0 var(--ink);
+    --bg:#faf7f0; --panel:#ffffff; --ink:#2f3347; --muted:#666b7e; --line:#ebe5d6; --hover:#f4efe3;
+    --focus:#2b6cdf;
+    --red:#f4a0a0; --yellow:#fbd96a; --green:#8ddb98; --blue:#8bbaf7; --purple:#c9aefc;
+    --bk-red:#e4575c; --bk-yellow:#e5a000; --bk-green:#2da64e; --bk-blue:#2d7be0; --bk-purple:#8657ee;
+    --shadow:0 1px 2px rgba(47,51,71,.06),0 8px 22px -14px rgba(47,51,71,.28);
+    --shadow-up:0 2px 4px rgba(47,51,71,.06),0 16px 30px -16px rgba(47,51,71,.38);
+    --r-sm:10px; --r-md:18px; --r-pill:999px;
+    --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px;
   }
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body {
-    margin: 0; color: var(--ink);
-    background-color: var(--bg);
-    background-image: radial-gradient(rgba(43, 45, 66, .10) 1.2px, transparent 1.4px);
-    background-size: 22px 22px;
-    font-family: "Lexend", system-ui, sans-serif; line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
+  :root[data-theme="dark"] {
+    color-scheme:dark;
+    --bg:#181a21; --panel:#22252e; --ink:#e9e7e2; --muted:#a3a7b5; --line:#323645; --hover:#2b2f3b;
+    --focus:#8bb4ff;
+    --red:#d98585; --yellow:#cfae55; --green:#6fb97b; --blue:#6f9ddb; --purple:#a58ee0;
+    --bk-red:#f08a8e; --bk-yellow:#f0c24d; --bk-green:#6fd08a; --bk-blue:#7db4f5; --bk-purple:#b79cf7;
+    --shadow:0 1px 2px rgba(0,0,0,.3); --shadow-up:0 10px 24px -12px rgba(0,0,0,.6);
   }
-  button { font-family: inherit; color: inherit; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme:dark;
+      --bg:#181a21; --panel:#22252e; --ink:#e9e7e2; --muted:#a3a7b5; --line:#323645; --hover:#2b2f3b;
+      --focus:#8bb4ff;
+      --red:#d98585; --yellow:#cfae55; --green:#6fb97b; --blue:#6f9ddb; --purple:#a58ee0;
+      --bk-red:#f08a8e; --bk-yellow:#f0c24d; --bk-green:#6fd08a; --bk-blue:#7db4f5; --bk-purple:#b79cf7;
+      --shadow:0 1px 2px rgba(0,0,0,.3); --shadow-up:0 10px 24px -12px rgba(0,0,0,.6);
+    }
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
+  body { margin:0; color:var(--ink); background:var(--bg); font-family:"Be Vietnam Pro",system-ui,sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased; }
+  button { font-family:inherit; color:inherit; }
+  [hidden] { display:none !important; }
 
-  .layout { display: grid; grid-template-columns: 268px minmax(0, 1fr); min-height: 100vh; }
+  .layout { display:grid; grid-template-columns:272px minmax(0,1fr); min-height:100vh; }
 
   /* ---------- Sidebar ---------- */
   .sidebar {
-    position: sticky; top: 0; height: 100vh; overflow-y: auto;
-    display: flex; flex-direction: column; gap: var(--s5);
-    padding: var(--s5) var(--s4);
-    background: #fffdf7;
-    border-right: var(--bd);
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    display:flex; flex-direction:column; gap:var(--s5); padding:var(--s5) var(--s4);
+    background:var(--panel); border-right:1px solid var(--line);
   }
-  .brand {
-    font-family: "Baloo 2", "Lexend", sans-serif; font-weight: 800;
-    font-size: 2rem; line-height: 1; letter-spacing: .5px; padding: 0 var(--s2);
-  }
-  .brand span { display: inline-block; }
-  .brand .wiggle { animation: wiggle 1.2s ease-in-out 1; }
-  @keyframes wiggle {
-    0%,100% { transform: rotate(0); }
-    25% { transform: rotate(-8deg) translateY(-5px); }
-    60% { transform: rotate(6deg) translateY(-2px); }
-  }
+  .brand { font-family:"Be Vietnam Pro",system-ui,sans-serif; font-weight:700; font-size:1.65rem; line-height:1; letter-spacing:-.02em; padding:0 var(--s2); }
+  .brand span { display:inline-block; }
+  .brand .dot { color:var(--bk-yellow); }
 
-  .search { position: relative; }
-  .search .glass { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); display: grid; pointer-events: none; }
+  .search { position:relative; }
+  .search .glass { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--muted); display:grid; pointer-events:none; }
   .search input {
-    width: 100%; font: 400 .9rem "Lexend", sans-serif; color: var(--ink);
-    background: var(--panel); border: var(--bd); border-radius: var(--r-pill);
-    padding: 11px 44px 11px 38px; min-height: 46px;
-    transition: box-shadow .15s, background .15s;
+    width:100%; font:400 16px "Be Vietnam Pro",system-ui,sans-serif; color:var(--ink);
+    background:var(--bg); border:1px solid var(--line); border-radius:var(--r-pill);
+    padding:11px 44px 11px 40px; min-height:48px; -webkit-appearance:none; appearance:none;
+    transition:border-color .15s, background .15s;
   }
-  .search input::placeholder { color: var(--muted); opacity: 1; }
-  .search input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; box-shadow: var(--shadow-btn); }
-  .search input::-webkit-search-cancel-button { display: none; }
-  .kbd {
-    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-    font-size: .78rem; color: var(--muted); border: 1.5px solid var(--line); border-radius: 6px; padding: 0 6px; background: #fff; pointer-events: none;
-  }
-  .kbd.hide { display: none; }
-  .clear {
-    position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
-    width: 32px; height: 32px; display: none; place-items: center;
-    font-size: .8rem; background: var(--hover); border: 0; border-radius: 50%; cursor: pointer; padding: 0; line-height: 1;
-  }
-  .clear.show { display: grid; }
-  .clear:hover { background: var(--yellow); }
+  .search input::placeholder { color:var(--muted); opacity:1; }
+  .search input:focus { border-color:var(--focus); outline:none; box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 25%,transparent); }
+  .search input::-webkit-search-cancel-button { display:none; }
+  .kbd { position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:.78rem; color:var(--muted); border:1px solid var(--line); border-radius:6px; padding:0 7px; background:var(--panel); pointer-events:none; }
+  .kbd.hide { display:none; }
+  .clear { position:absolute; right:7px; top:50%; transform:translateY(-50%); width:34px; height:34px; display:none; place-items:center; background:var(--hover); border:0; border-radius:50%; cursor:pointer; padding:0; }
+  .clear.show { display:grid; }
 
-  .nav { display: flex; flex-direction: column; gap: var(--s2); }
+  .nav { display:flex; flex-direction:column; gap:var(--s1); }
   .nav-item {
-    display: flex; align-items: center; gap: var(--s3);
-    width: 100%; text-align: left; background: transparent;
-    border: 2px solid transparent; border-radius: var(--r-pill);
-    padding: 9px 14px 9px 12px; min-height: 46px; font-size: .95rem; cursor: pointer;
-    transition: background .12s, box-shadow .12s, transform .12s;
+    display:flex; align-items:center; gap:var(--s3); width:100%; text-align:left;
+    background:transparent; border:0; border-radius:14px;
+    padding:8px 12px 8px 8px; min-height:50px; font-size:.97rem; cursor:pointer; color:var(--ink);
+    transition:background .12s;
   }
-  .nav-item:hover { background: var(--hover); }
-  .nav-item[aria-current="true"] { background: var(--yellow); border-color: var(--ink); box-shadow: var(--shadow-btn); font-weight: 500; }
-  .nav-item .ni { display: grid; place-items: center; width: 24px; height: 24px; flex: none; }
-  .nav-item .ni svg { width: 19px; height: 19px; }
-  .nav-item .lbl { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .nav-item .n {
-    font-size: .78rem; min-width: 26px; text-align: center; padding: 1px 8px;
-    border-radius: var(--r-pill); background: rgba(43,45,66,.08); color: var(--ink);
-  }
-  .nav-item[aria-current="true"] .n { background: #fff; }
-  .nav-item:focus-visible, .card:focus-visible, .clear:focus-visible, .pg:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+  .nav-item:hover { background:var(--hover); }
+  .nav-item[aria-current="true"] { background:color-mix(in srgb,var(--g,var(--yellow)) 30%,var(--panel)); font-weight:600; }
+  .nav-item .ni { display:grid; place-items:center; width:34px; height:34px; flex:none; border-radius:11px; background:color-mix(in srgb,var(--g,var(--yellow)) 42%,var(--panel)); }
+  .nav-item .ni svg { width:18px; height:18px; }
+  .nav-item .lbl { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .nav-item .n { font-size:.78rem; min-width:26px; text-align:center; padding:1px 8px; border-radius:var(--r-pill); background:var(--hover); color:var(--muted); }
+  .nav-item[aria-current="true"] .n { background:var(--panel); color:var(--ink); }
+
+  .theme { margin-top:auto; display:flex; align-items:center; gap:var(--s3); width:100%; min-height:48px; padding:8px 14px; background:transparent; border:1px solid var(--line); border-radius:var(--r-pill); font-size:.9rem; cursor:pointer; color:var(--muted); }
+  .theme:hover { background:var(--hover); color:var(--ink); }
+  .theme svg { width:20px; height:20px; flex:none; }
+  button:focus-visible,.card:focus-visible,.nav-item:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
 
   /* ---------- Main ---------- */
-  .main { padding: var(--s5) var(--s6) var(--s6); max-width: 1040px; width: 100%; margin: 0 auto; }
-  .page-head { display: flex; flex-direction: column; align-items: center; gap: var(--s1); text-align: center; margin: 0 0 var(--s5); }
-  .page-head h1 {
-    font-family: "Baloo 2", "Lexend", sans-serif; font-weight: 800; font-size: 1.9rem; line-height: 1.15; margin: 0;
-    padding: 0 var(--s2) 2px;
-    background: linear-gradient(transparent 62%, var(--g, var(--yellow)) 62%, var(--g, var(--yellow)) 92%, transparent 92%);
-  }
-  .count { margin: 0; color: var(--muted); font-size: .85rem; white-space: nowrap; }
+  .main { padding:var(--s6) var(--s6) var(--s6); max-width:1060px; width:100%; margin:0 auto; }
+  .page-head { display:flex; align-items:baseline; justify-content:space-between; gap:var(--s4); flex-wrap:wrap; margin:0 0 var(--s5); }
+  .page-head h1 { font-weight:700; font-size:1.75rem; line-height:1.2; letter-spacing:-.02em; margin:0; }
+  .count { margin:0; color:var(--muted); font-size:.88rem; white-space:nowrap; }
 
-  .section { margin: 0 0 var(--s5); }
-  .group-title {
-    display: flex; align-items: center; gap: var(--s3);
-    font-family: "Baloo 2", "Lexend", sans-serif; font-weight: 800; font-size: 1.15rem; line-height: 1.2; margin: 0 0 var(--s4);
-  }
-  .group-title::after { content: ""; flex: 1; height: 0; border-top: 2px dotted rgba(43, 45, 66, .25); }
-  .gicon { display: grid; place-items: center; width: 32px; height: 32px; background: var(--g, var(--blue)); border: var(--bd); border-radius: var(--r-sm); }
-  .gicon svg { width: 17px; height: 17px; }
-  .sub-section { margin: 0 0 var(--s5); }
-  .sub-title { font: 500 .85rem "Lexend", sans-serif; color: var(--muted); margin: 0 0 var(--s3); }
-  .sub-title .n { margin-left: var(--s1); opacity: .8; }
+  .section { margin:0 0 var(--s5); }
+  .group-title { display:flex; align-items:center; gap:var(--s3); font-family:"Be Vietnam Pro",system-ui,sans-serif; font-weight:700; font-size:1.1rem; line-height:1.2; margin:0 0 var(--s4); }
+  .group-title::after { content:""; flex:1; height:1px; background:var(--line); }
+  .gicon { display:grid; place-items:center; width:34px; height:34px; background:color-mix(in srgb,var(--g,var(--blue)) 45%,var(--panel)); border-radius:var(--r-sm); }
+  .gicon svg { width:18px; height:18px; }
+  .sub-section { margin:0 0 var(--s5); }
+  .sub-title { font:500 .88rem "Be Vietnam Pro",system-ui,sans-serif; color:var(--muted); margin:0 0 var(--s3); }
+  .sub-title .n { margin-left:var(--s1); opacity:.8; }
 
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; padding: 0 6px 6px 0; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:20px; padding:0 0 6px 0; }
   .card {
-    display: flex; flex-direction: column; align-items: stretch;
-    background: var(--panel); color: inherit; text-decoration: none;
-    border: var(--bd); border-radius: var(--r-md); overflow: hidden;
-    box-shadow: var(--shadow-card);
-    transition: transform .15s, box-shadow .15s;
+    display:flex; flex-direction:column; align-items:stretch;
+    background:var(--panel); color:inherit; text-decoration:none;
+    border:1px solid var(--line); border-radius:var(--r-md); overflow:hidden;
+    box-shadow:var(--shadow);
+    transition:transform .18s, box-shadow .18s, border-color .18s;
   }
-  .card .row { display: flex; align-items: center; gap: var(--s3); padding: 10px 14px 10px 12px; }
-  .thumb {
-    aspect-ratio: 2 / 1; overflow: hidden; border-bottom: var(--bd);
-    background: color-mix(in srgb, var(--accent, var(--blue)) 22%, white);
-  }
-  .thumb img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; transition: transform .3s; }
-  .card:hover .thumb img { transform: scale(1.05); }
-  .card:hover, .card:focus-visible { transform: translate(-3px, -3px); box-shadow: var(--shadow-lift); }
-  .icon {
-    flex: none; width: 38px; height: 38px; display: grid; place-items: center; color: var(--ink);
-    background: var(--accent, var(--blue)); border: var(--bd); border-radius: 12px;
-  }
-  .icon svg { width: 20px; height: 20px; }
-  .text { min-width: 0; flex: 1; }
-  .card h3 {
-    font-family: "Baloo 2", "Lexend", sans-serif; font-size: 1.08rem; line-height: 1.2; font-weight: 800;
-    margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .card p { margin: 1px 0 0; color: var(--muted); font-size: .84rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .go { flex: none; font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.1rem; opacity: .35; transition: opacity .15s, transform .15s; }
-  .card:hover .go { opacity: 1; transform: translate(2px, -2px); }
-  .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
-  mark { background: var(--yellow); color: inherit; border-radius: 4px; padding: 0 2px; }
-  .empty { display: none; text-align: center; color: var(--muted); margin-top: 40px; }
+  .card .row { display:flex; align-items:center; gap:var(--s3); padding:14px 16px 14px 14px; }
+  .thumb { aspect-ratio:2/1; overflow:hidden; background:color-mix(in srgb,var(--accent,var(--blue)) 25%,var(--panel)); }
+  .thumb img { width:100%; height:100%; object-fit:cover; object-position:center; display:block; transition:transform .35s; }
+  .card:hover .thumb img { transform:scale(1.04); }
+  .card:hover,.card:focus-visible { transform:translateY(-3px); box-shadow:var(--shadow-up); border-color:color-mix(in srgb,var(--accent,var(--blue)) 70%,var(--line)); }
+  .icon { flex:none; width:42px; height:42px; display:grid; place-items:center; color:var(--ink); background:color-mix(in srgb,var(--accent,var(--blue)) 48%,var(--panel)); border-radius:13px; }
+  .icon svg { width:21px; height:21px; }
+  .text { min-width:0; flex:1; }
+  .card h3 { font-family:"Be Vietnam Pro",system-ui,sans-serif; font-size:1.02rem; line-height:1.3; font-weight:600; margin:0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .card p { margin:3px 0 0; color:var(--muted); font-size:.88rem; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .tag { display:inline-block; margin-top:5px; font-size:.72rem; color:var(--muted); background:var(--hover); border-radius:var(--r-pill); padding:1px 9px; }
+  .go { flex:none; display:grid; place-items:center; width:30px; height:30px; border-radius:50%; background:var(--hover); color:var(--muted); font-size:1rem; transition:background .15s,color .15s,transform .15s; }
+  .card:hover .go { background:color-mix(in srgb,var(--accent,var(--blue)) 55%,var(--panel)); color:var(--ink); transform:translate(1px,-1px); }
+  .sr-only { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+  mark { background:color-mix(in srgb,var(--yellow) 65%,transparent); color:inherit; border-radius:4px; padding:0 2px; }
+  .empty { display:none; text-align:center; color:var(--muted); margin-top:40px; }
 
   /* ---------- Chuyển trang ---------- */
-  .pager { display: none; justify-content: center; align-items: center; gap: var(--s2); margin: var(--s4) 0 var(--s1); flex-wrap: wrap; }
-  .pager.show { display: flex; }
-  .pg {
-    min-width: 46px; min-height: 46px; padding: 0 16px; cursor: pointer;
-    font: 500 .95rem "Lexend", sans-serif; background: var(--panel);
-    border: var(--bd); border-radius: var(--r-pill); box-shadow: var(--shadow-btn);
-    transition: transform .12s, box-shadow .12s, background .12s;
-  }
-  .pg:hover:not(:disabled) { background: var(--hover); transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
-  .pg[aria-current="page"] { background: var(--yellow); font-weight: 600; }
-  .pg:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
+  .pager { display:none; justify-content:center; align-items:center; gap:var(--s2); margin:var(--s4) 0 var(--s1); flex-wrap:wrap; }
+  .pager.show { display:flex; }
+  .pg { min-width:48px; min-height:48px; padding:0 16px; cursor:pointer; font:500 .95rem "Be Vietnam Pro",system-ui,sans-serif; background:var(--panel); border:1px solid var(--line); border-radius:var(--r-pill); transition:background .12s; }
+  .pg:hover:not(:disabled) { background:var(--hover); }
+  .pg[aria-current="page"] { background:color-mix(in srgb,var(--yellow) 55%,var(--panel)); border-color:transparent; font-weight:600; }
+  .pg:disabled { opacity:.4; cursor:not-allowed; }
 
-  /* Desktop: nếu tổng số hàng <= 3 thì cả trang vừa 1 màn hình, không cần cuộn (JS thêm class "fit") */
-  @media (min-width: 861px) {
-    .main.fit { height: 100vh; height: 100dvh; overflow-y: auto; display: flex; flex-direction: column; padding-bottom: var(--s4); }
-    .main.fit .page-head { margin-bottom: var(--s3); flex: none; }
-    .main.fit #grid, .main.fit .section, .main.fit .sub-section { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; }
-    .main.fit #grid { flex: 1 1 0; }
-    .main.fit .section, .main.fit .sub-section { margin: 0 0 var(--s2); }
-    .main.fit .sub-section .grid, .main.fit .section > .grid { flex: 1 1 auto; min-height: 0; }
-    .main.fit .grid { grid-auto-rows: minmax(0, auto); gap: 18px; }
-    .main.fit .card { min-height: 0; }
-    .main.fit .thumb { flex: 0 1 auto; min-height: 44px; aspect-ratio: 2 / 1; height: auto; }
-    .main.fit .card .row { flex: none; }
-    .main.fit .pager { flex: none; margin: var(--s2) 0 0; }
+  /* Desktop: nếu tổng số hàng <= 3 thì vừa 1 màn hình (JS thêm class "fit") */
+  @media (min-width:861px) {
+    .main.fit { height:100vh; height:100dvh; overflow-y:auto; display:flex; flex-direction:column; padding-bottom:var(--s4); }
+    .main.fit .page-head { margin-bottom:var(--s3); flex:none; }
+    .main.fit #grid,.main.fit .section,.main.fit .sub-section { flex:0 1 auto; min-height:0; display:flex; flex-direction:column; }
+    .main.fit #grid { flex:1 1 0; }
+    .main.fit .section,.main.fit .sub-section { margin:0 0 var(--s2); }
+    .main.fit .sub-section .grid,.main.fit .section > .grid { flex:1 1 auto; min-height:0; }
+    .main.fit .grid { grid-auto-rows:minmax(0,auto); gap:18px; }
+    .main.fit .card { min-height:0; }
+    .main.fit .thumb { flex:0 1 auto; min-height:44px; aspect-ratio:2/1; height:auto; }
+    .main.fit .card .row { flex:none; }
+    .main.fit .pager { flex:none; margin:var(--s2) 0 0; }
   }
 
-  /* ---------- Mobile: sidebar thành thanh trên cùng ---------- */
-  @media (max-width: 860px) {
-    .layout { display: block; }
+  /* ---------- Mobile ---------- */
+  @media (max-width:860px) {
+    .layout { display:block; }
     .sidebar {
-      position: sticky; top: 0; z-index: 10; height: auto; overflow: visible;
-      flex-direction: row; flex-wrap: wrap; align-items: center; gap: 10px 12px;
-      padding: 10px 14px; border-right: 0; border-bottom: var(--bd);
+      position:sticky; top:0; z-index:10; height:auto; overflow:visible;
+      flex-direction:row; flex-wrap:wrap; align-items:center; gap:10px 10px;
+      padding:calc(10px + env(safe-area-inset-top,0px)) max(14px,env(safe-area-inset-right,0px)) 8px max(14px,env(safe-area-inset-left,0px));
+      border-right:0; border-bottom:1px solid var(--line);
     }
-    .brand { font-size: 1.5rem; padding: 0; }
-    .search { flex: 1 1 160px; }
-    .nav { flex: 1 0 100%; flex-direction: row; gap: 6px; overflow-x: auto; padding: 2px 4px 6px 2px; scrollbar-width: none; }
-    .nav::-webkit-scrollbar { display: none; }
-    .nav-item { width: auto; flex: none; white-space: nowrap; padding: 9px 14px; font-size: .88rem; background: var(--panel); border: 2px solid var(--line); }
-    .nav-item[aria-current="true"] { background: var(--yellow); border-color: var(--ink); }
-    .nav-item .ni { display: none; }
-    .main { padding: var(--s5) var(--s4) 48px; }
-    .page-head h1 { font-size: 1.6rem; }
-    .grid { grid-template-columns: 1fr; }
+    .brand { font-size:1.35rem; padding:0; order:0; }
+    .search { flex:1 1 150px; order:1; }
+    .theme { order:2; width:48px; height:48px; min-height:48px; padding:0; justify-content:center; margin:0; border-radius:50%; }
+    .theme .tl { display:none; }
+    .nav { order:3; flex:1 0 100%; flex-direction:row; gap:6px; overflow-x:auto; padding:2px 2px 4px; scrollbar-width:none; }
+    .nav::-webkit-scrollbar { display:none; }
+    .nav-item { width:auto; flex:none; white-space:nowrap; padding:6px 14px 6px 6px; min-height:46px; font-size:.9rem; background:var(--bg); border:1px solid var(--line); border-radius:var(--r-pill); }
+    .nav-item .ni { width:30px; height:30px; border-radius:50%; }
+    .nav-item .n { display:none; }
+    .nav-item[aria-current="true"] { border-color:transparent; }
+    .main { padding:var(--s4) max(16px,env(safe-area-inset-right,0px)) 48px max(16px,env(safe-area-inset-left,0px)); }
+    .page-head h1 { font-size:1.5rem; }
+    .grid { grid-template-columns:1fr; gap:16px; }
   }
-  @media (prefers-reduced-motion: reduce) {
-    html { scroll-behavior: auto; }
-    * { animation: none !important; transition: none !important; }
-    .card:hover, .card:focus-visible, .pg:hover { transform: none; }
+  @media (prefers-reduced-motion:reduce) {
+    html { scroll-behavior:auto; }
+    * { animation:none !important; transition:none !important; }
+    .card:hover,.card:focus-visible { transform:none; }
   }
 </style>
 </head>
@@ -347,6 +199,8 @@
     </div>
 
     <nav class="nav" id="nav" aria-label="Danh mục"></nav>
+
+    <button class="theme" id="theme" type="button" aria-label="Đổi giao diện sáng / tối"><svg id="th-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg><span class="tl" id="th-lbl"></span></button>
   </aside>
 
   <div class="main">
@@ -641,20 +495,15 @@ function icon(name) {
 }
 
 const BRAND = "Caitlin";
-const COLORS = ["--red", "--yellow", "--green", "--blue", "--purple"];
+const COLORS = ["--bk-red", "--bk-yellow", "--bk-green", "--bk-blue", "--bk-purple"];
 
 /* Tên nhiều màu như bút sáp */
 const brand = document.getElementById("brand");
-[...BRAND].forEach((ch, i) => {
-  const s = document.createElement("span");
-  s.textContent = ch;
-  s.style.color = `var(${COLORS[i % COLORS.length]})`;
-  s.style.textShadow = "1.5px 1.5px 0 var(--ink)";
-  s.style.animationDelay = `${i * 60}ms`;
-  s.className = "wiggle";
-  s.setAttribute("aria-hidden", "true");
-  brand.appendChild(s);
-});
+brand.textContent = BRAND;
+const dot = document.createElement("span");
+dot.className = "dot"; dot.textContent = "."; dot.setAttribute("aria-hidden", "true");
+brand.appendChild(dot);
+
 
 const grid = document.getElementById("grid");
 const nav = document.getElementById("nav");
@@ -715,14 +564,16 @@ function thumbSrc(a) {
 }
 
 function cardHTML(a, terms) {
+  const src = thumbSrc(a);
   return `
-    <a class="card" href="${esc(a.url)}" target="_blank" rel="noopener noreferrer" title="${esc(a.desc || "")}" style="--accent: var(--${esc(a.color || "blue")})">
-      ${thumbSrc(a) ? `<div class="thumb"><img src="${esc(thumbSrc(a))}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>` : ""}
+    <a class="card" href="${esc(a.url)}" target="_blank" rel="noopener noreferrer" style="--accent: var(--${esc(a.color || "blue")})">
+      ${src ? `<div class="thumb"><img src="${esc(src)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>` : ""}
       <div class="row">
         <div class="icon" aria-hidden="true">${icon(a.icon)}</div>
         <div class="text">
-          <h3>${highlight(a.title, terms)}<span class="sr-only"> (mở ở tab mới)</span></h3>
+          <h3>${highlight(a.title.trim(), terms)}<span class="sr-only"> (mở ở tab mới)</span></h3>
           <p>${highlight(a.desc || "", terms)}</p>
+          ${terms.length ? `<span class="tag">${esc(a.type)}</span>` : ""}
         </div>
         <span class="go" aria-hidden="true">↗</span>
       </div>
@@ -745,7 +596,7 @@ function renderNav() {
   nav.innerHTML = GROUPS.map(g => {
     const n = APPS.filter(a => g.types.includes(a.type)).length;
     const on = !searching && curGroup === g.name ? ' aria-current="true"' : "";
-    return `<button type="button" class="nav-item group" data-g="${esc(g.name)}"${on}>
+    return `<button type="button" class="nav-item group" data-g="${esc(g.name)}"${on} style="--g: var(--${esc(g.color)})">
       <span class="ni" aria-hidden="true">${icon(g.icon)}</span><span class="lbl">${esc(g.name)}</span><span class="n">${n}</span>
     </button>`;
   }).join("");
@@ -856,6 +707,25 @@ document.addEventListener("keydown", e => {
     input.focus();
   }
 });
+
+/* Chế độ sáng / tối: nhớ lựa chọn trên máy này */
+const rootEl = document.documentElement, themeBtn = document.getElementById("theme");
+const MOON = '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>';
+const SUN = '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/>';
+function isDark() { const t = rootEl.dataset.theme; return t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches; }
+function paintTheme() {
+  const d = isDark();
+  document.getElementById("th-ic").innerHTML = d ? SUN : MOON;
+  document.getElementById("th-lbl").textContent = d ? "Chế độ sáng" : "Chế độ tối";
+  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = d ? "#181a21" : "#faf7f0";
+}
+themeBtn.addEventListener("click", () => {
+  const n = isDark() ? "light" : "dark";
+  rootEl.dataset.theme = n;
+  try { localStorage.setItem("caitlin_theme", n); } catch (e) {}
+  paintTheme();
+});
+paintTheme();
 
 render();
 </script>
